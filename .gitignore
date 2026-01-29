@@ -11,10 +11,14 @@ env/
 backend/reference.jpg
 backend/settings.json
 backend/last_cad_generation.json
+backend/profiles/
+backend/biometric_data*
+.sessions/
 long_term_memory/
 projects/
 output.stl
 cad_outputs/
+logs/
 
 # Node.js
 node_modules/

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, MicOff, Settings, Power, Video, VideoOff, Hand, Lightbulb, Printer, Globe, Box } from 'lucide-react';
+import { Mic, MicOff, Settings, Power, Video, VideoOff, Hand, Lightbulb, Printer, Globe, Box, Camera } from 'lucide-react';
 
 const ToolsModule = ({
     isConnected,
@@ -21,6 +21,12 @@ const ToolsModule = ({
     showCadWindow,
     onToggleBrowser,
     showBrowserWindow,
+    onToggleBiometricCapture,
+    showBiometricCapture,
+    onToggleBiometricTest,
+    useBiometricTest,
+    onToggleFixedVersion,
+    useFixedVersion,
     activeDragElement,
 
     position,
@@ -140,6 +146,46 @@ const ToolsModule = ({
                         } `}
                 >
                     <Globe size={24} />
+                </button>
+
+                {/* Biometric Test Toggle (Debug) */}
+                <button
+                    onClick={onToggleBiometricTest}
+                    className={`p-3 rounded-full border-2 transition-all duration-300 ${useBiometricTest
+                        ? 'border-orange-400 bg-orange-400/10 text-orange-400 hover:bg-orange-400/20 shadow-[0_0_15px_rgba(251,146,60,0.3)]'
+                        : 'border-cyan-900 text-cyan-700 hover:border-orange-500 hover:text-orange-500'
+                        } `}
+                >
+                    <div className="relative">
+                        <Camera size={24} />
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-400 rounded-full"></div>
+                    </div>
+                </button>
+
+                {/* Biometric Fixed Version Toggle */}
+                <button
+                    onClick={onToggleFixedVersion}
+                    className={`p-3 rounded-full border-2 transition-all duration-300 ${useFixedVersion
+                        ? 'border-green-400 bg-green-400/10 text-green-400 hover:bg-green-400/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                        : 'border-cyan-900 text-cyan-700 hover:border-green-500 hover:text-green-500'
+                        } `}
+                >
+                    <div className="relative">
+                        <Camera size={24} />
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"></div>
+                        <div className="absolute -bottom-1 -right-1 text-[8px] text-green-400">✓</div>
+                    </div>
+                </button>
+
+                {/* Biometric Capture Toggle */}
+                <button
+                    onClick={onToggleBiometricCapture}
+                    className={`p-3 rounded-full border-2 transition-all duration-300 ${showBiometricCapture
+                        ? 'border-pink-400 bg-pink-400/10 text-pink-400 hover:bg-pink-400/20 shadow-[0_0_15px_rgba(244,114,182,0.3)]'
+                        : 'border-cyan-900 text-cyan-700 hover:border-pink-500 hover:text-pink-500'
+                        } `}
+                >
+                    <Camera size={24} />
                 </button>
             </div>
         </div>

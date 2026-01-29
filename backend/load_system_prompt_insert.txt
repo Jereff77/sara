@@ -1,0 +1,33 @@
+# Variable global para settings (definido en server.py)
+SETTINGS = None
+
+def load_system_prompt(settings=None):
+    """Carga el system prompt desde el archivo markdown con configuración dinámica."""
+    prompt_file = Path(__file__).parent / "system_prompt.md"
+    try:
+        with open(prompt_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+            # Reemplazar placeholders con valores de configuración
+            if settings:
+                timezone = settings.get('timezone', 'UTC')
+                location = settings.get('location', 'Ubicación desconocida')
+            elif SETTINGS:
+                timezone = SETTINGS.get('timezone', 'UTC')
+                location = SETTINGS.get('location', 'Ubicación desconocida')
+            else:
+                timezone = 'UTC'
+                location = 'Ubicación desconocida'
+                
+            # Reemplazar {{CURRENT_TIMEZONE}}
+            content = content.replace('{{CURRENT_TIMEZONE}}', timezone)
+            # Reemplazar {{CURRENT_LOCATION}}
+            content = content.replace('{{CURRENT_LOCATION}}', location)
+            
+            return content
+    except FileNotFoundError:
+        print(f"[SARA] System prompt file not found, using default")
+        return "Eres SARA, un asistente de IA."
+    except Exception as e:
+        print(f"[SARA] Error loading system prompt: {e}")
+        return "Eres SARA, un asistente de IA."

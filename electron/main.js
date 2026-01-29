@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// Initialize logging system - MUST BE FIRST
+const { initLogger } = require('./logger');
+initLogger('logs', 'ada_electron');
+
 // Use ANGLE D3D11 backend - more stable on Windows while keeping WebGL working
 // This fixes "GPU state invalid after WaitForGetOffsetInRange" error
 app.commandLine.appendSwitch('use-angle', 'd3d11');

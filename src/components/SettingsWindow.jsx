@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 
 const TOOLS = [
-    { id: 'generate_cad', label: 'Generate CAD' },
-    { id: 'run_web_agent', label: 'Web Agent' },
-    { id: 'create_directory', label: 'Create Folder' },
-    { id: 'write_file', label: 'Write File' },
-    { id: 'read_directory', label: 'Read Directory' },
-    { id: 'read_file', label: 'Read File' },
-    { id: 'create_project', label: 'Create Project' },
-    { id: 'switch_project', label: 'Switch Project' },
-    { id: 'list_projects', label: 'List Projects' },
-    { id: 'list_smart_devices', label: 'List Devices' },
-    { id: 'control_light', label: 'Control Light' },
-    { id: 'discover_printers', label: 'Discover Printers' },
-    { id: 'print_stl', label: 'Print 3D Model' },
-    { id: 'iterate_cad', label: 'Iterate CAD' },
+    { id: 'generate_cad', label: 'Generar CAD' },
+    { id: 'run_web_agent', label: 'Agente Web' },
+    { id: 'create_directory', label: 'Crear Carpeta' },
+    { id: 'write_file', label: 'Escribir Archivo' },
+    { id: 'read_directory', label: 'Leer Directorio' },
+    { id: 'read_file', label: 'Leer Archivo' },
+    { id: 'create_project', label: 'Crear Proyecto' },
+    { id: 'switch_project', label: 'Cambiar Proyecto' },
+    { id: 'list_projects', label: 'Listar Proyectos' },
+    { id: 'list_smart_devices', label: 'Listar Dispositivos' },
+    { id: 'control_light', label: 'Controlar Luz' },
+    { id: 'discover_printers', label: 'Descubrir Impresoras' },
+    { id: 'print_stl', label: 'Imprimir Modelo 3D' },
+    { id: 'iterate_cad', label: 'Iterar CAD' },
 ];
 
 const SettingsWindow = ({
@@ -34,14 +34,34 @@ const SettingsWindow = ({
     isCameraFlipped,
     setIsCameraFlipped,
     handleFileUpload,
+    onReloadDevices,
+    timezone,
+    setTimezone,
     onClose
 }) => {
     const [permissions, setPermissions] = useState({});
     const [faceAuthEnabled, setFaceAuthEnabled] = useState(false);
+    const [availableTimezones, setAvailableTimezones] = useState([]);
 
     useEffect(() => {
         // Request initial permissions
         socket.emit('get_settings');
+
+        // Load available timezones
+        try {
+            const tzList = Intl.supportedValuesOf('timeZone');
+            setAvailableTimezones(tzList);
+            console.log(`Loaded ${tzList.length} timezones`);
+        } catch (error) {
+            console.error("Failed to load timezones:", error);
+            setAvailableTimezones(['UTC', 'America/New_York', 'America/Los_Angeles', 'America/Chicago', 'Europe/London', 'Asia/Tokyo', 'Australia/Sydney']);
+        }
+
+        // Reload devices when settings window opens
+        if (onReloadDevices) {
+            console.log("Auto-reloading devices...");
+            onReloadDevices();
+        }
 
         // Listen for updates
         const handleSettings = (settings) => {
@@ -52,17 +72,20 @@ const SettingsWindow = ({
                     setFaceAuthEnabled(settings.face_auth_enabled);
                     localStorage.setItem('face_auth_enabled', settings.face_auth_enabled);
                 }
+                if (settings.timezone) {
+                    localStorage.setItem('timezone', settings.timezone);
+                }
             }
         };
 
         socket.on('settings', handleSettings);
         // Also listen for legacy tool_permissions if needed, but 'settings' covers it
-        // socket.on('tool_permissions', handlePermissions); 
+        // socket.on('tool_permissions', handlePermissions);
 
         return () => {
             socket.off('settings', handleSettings);
         };
-    }, [socket]);
+    }, [socket, onReloadDevices]);
 
     const togglePermission = (toolId) => {
         const currentVal = permissions[toolId] !== false; // Default True
@@ -91,17 +114,28 @@ const SettingsWindow = ({
     return (
         <div className="absolute top-20 right-10 bg-black/90 border border-cyan-500/50 p-4 rounded-lg z-50 w-80 backdrop-blur-xl shadow-[0_0_30px_rgba(6,182,212,0.2)]">
             <div className="flex justify-between items-center mb-4 border-b border-cyan-900/50 pb-2">
-                <h2 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">Settings</h2>
-                <button onClick={onClose} className="text-cyan-600 hover:text-cyan-400">
-                    <X size={16} />
-                </button>
+                <h2 className="text-cyan-400 font-bold text-sm uppercase tracking-wider">Configuración</h2>
+                <div className="flex items-center gap-2">
+                    {onReloadDevices && (
+                        <button
+                            onClick={onReloadDevices}
+                            className="text-cyan-600 hover:text-cyan-400 transition-colors"
+                            title="Recargar Dispositivos"
+                        >
+                            <RefreshCw size={16} />
+                        </button>
+                    )}
+                    <button onClick={onClose} className="text-cyan-600 hover:text-cyan-400">
+                        <X size={16} />
+                    </button>
+                </div>
             </div>
 
             {/* Authentication Section */}
             <div className="mb-6">
-                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Security</h3>
+                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Seguridad</h3>
                 <div className="flex items-center justify-between text-xs bg-gray-900/50 p-2 rounded border border-cyan-900/30">
-                    <span className="text-cyan-100/80">Face Authentication</span>
+                    <span className="text-cyan-100/80">Autenticación Facial</span>
                     <button
                         onClick={toggleFaceAuth}
                         className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${faceAuthEnabled ? 'bg-cyan-500/80' : 'bg-gray-700'}`}
@@ -115,7 +149,7 @@ const SettingsWindow = ({
 
             {/* Microphone Section */}
             <div className="mb-4">
-                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Microphone</h3>
+                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Micrófono</h3>
                 <select
                     value={selectedMicId}
                     onChange={(e) => setSelectedMicId(e.target.value)}
@@ -123,7 +157,7 @@ const SettingsWindow = ({
                 >
                     {micDevices.map((device, i) => (
                         <option key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Microphone ${i + 1}`}
+                            {device.label || `Micrófono ${i + 1}`}
                         </option>
                     ))}
                 </select>
@@ -131,7 +165,7 @@ const SettingsWindow = ({
 
             {/* Speaker Section */}
             <div className="mb-4">
-                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Speaker</h3>
+                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Altavoz</h3>
                 <select
                     value={selectedSpeakerId}
                     onChange={(e) => setSelectedSpeakerId(e.target.value)}
@@ -139,15 +173,15 @@ const SettingsWindow = ({
                 >
                     {speakerDevices.map((device, i) => (
                         <option key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Speaker ${i + 1}`}
+                            {device.label || `Altavoz ${i + 1}`}
                         </option>
                     ))}
                 </select>
             </div>
 
             {/* Webcam Section */}
-            <div className="mb-6">
-                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Webcam</h3>
+            <div className="mb-4">
+                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Cámara Web</h3>
                 <select
                     value={selectedWebcamId}
                     onChange={(e) => setSelectedWebcamId(e.target.value)}
@@ -155,7 +189,23 @@ const SettingsWindow = ({
                 >
                     {webcamDevices.map((device, i) => (
                         <option key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Camera ${i + 1}`}
+                            {device.label || `Cámara ${i + 1}`}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Timezone Section */}
+            <div className="mb-6">
+                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Zona Horaria</h3>
+                <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full bg-gray-900 border border-cyan-800 rounded p-2 text-xs text-cyan-100 focus:border-cyan-400 outline-none"
+                >
+                    {availableTimezones.map((tz) => (
+                        <option key={tz} value={tz}>
+                            {tz}
                         </option>
                     ))}
                 </select>
@@ -164,7 +214,7 @@ const SettingsWindow = ({
             {/* Cursor Section */}
             <div className="mb-6">
                 <div className="flex justify-between mb-2">
-                    <h3 className="text-cyan-400 font-bold text-xs uppercase tracking-wider opacity-80">Cursor Sensitivity</h3>
+                    <h3 className="text-cyan-400 font-bold text-xs uppercase tracking-wider opacity-80">Sensibilidad del Cursor</h3>
                     <span className="text-xs text-cyan-500">{cursorSensitivity}x</span>
                 </div>
                 <input
@@ -180,9 +230,9 @@ const SettingsWindow = ({
 
             {/* Gesture Control Section */}
             <div className="mb-6">
-                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Gesture Control</h3>
+                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Control por Gestos</h3>
                 <div className="flex items-center justify-between text-xs bg-gray-900/50 p-2 rounded border border-cyan-900/30">
-                    <span className="text-cyan-100/80">Flip Camera Horizontal</span>
+                    <span className="text-cyan-100/80">Invertir Cámara Horizontal</span>
                     <button
                         onClick={toggleCameraFlip}
                         className={`relative w-8 h-4 rounded-full transition-colors duration-200 ${isCameraFlipped ? 'bg-cyan-500/80' : 'bg-gray-700'}`}
@@ -196,7 +246,7 @@ const SettingsWindow = ({
 
             {/* Tool Permissions Section */}
             <div className="mb-6">
-                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Tool Confirmations</h3>
+                <h3 className="text-cyan-400 font-bold mb-3 text-xs uppercase tracking-wider opacity-80">Confirmaciones de Herramientas</h3>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                     {TOOLS.map(tool => {
                         const isRequired = permissions[tool.id] !== false; // Default True
@@ -219,9 +269,9 @@ const SettingsWindow = ({
 
             {/* Memory Section */}
             <div>
-                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Memory Data</h3>
+                <h3 className="text-cyan-400 font-bold mb-2 text-xs uppercase tracking-wider opacity-80">Datos de Memoria</h3>
                 <div className="flex flex-col gap-2">
-                    <label className="text-[10px] text-cyan-500/60 uppercase">Upload Memory Text</label>
+                    <label className="text-[10px] text-cyan-500/60 uppercase">Cargar Texto de Memoria</label>
                     <input
                         type="file"
                         accept=".txt"

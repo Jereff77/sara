@@ -7,6 +7,9 @@ import CadWindow from './components/CadWindow';
 import BrowserWindow from './components/BrowserWindow';
 import ChatModule from './components/ChatModule';
 import ToolsModule from './components/ToolsModule';
+import BiometricCapture from './components/BiometricCapture';
+import BiometricTest from './components/BiometricTest';
+import BiometricCaptureFixed from './components/BiometricCaptureFixed';
 import { Mic, MicOff, Settings, X, Minus, Power, Video, VideoOff, Layout, Hand, Printer, Clock } from 'lucide-react';
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 // MemoryPrompt removed - memory is now actively saved to project
@@ -60,6 +63,9 @@ function App() {
     const [showPrinterWindow, setShowPrinterWindow] = useState(false);
     const [showCadWindow, setShowCadWindow] = useState(false);
     const [showBrowserWindow, setShowBrowserWindow] = useState(false);
+    const [showBiometricCapture, setShowBiometricCapture] = useState(false);
+    const [useBiometricTest, setUseBiometricTest] = useState(false); // Para modo de prueba
+    const [useFixedVersion, setUseFixedVersion] = useState(false); // Para usar la versión corregida
 
     // Printing workflow status (for top toolbar display)
     const [slicingStatus, setSlicingStatus] = useState({ active: false, percent: 0, message: '' });
@@ -78,12 +84,37 @@ function App() {
     const [speakerDevices, setSpeakerDevices] = useState([]);
     const [webcamDevices, setWebcamDevices] = useState([]);
 
+    const reloadDevices = async () => {
+        console.log("Reloading devices...");
+        try {
+            const devs = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devs.filter(d => d.kind === 'audioinput');
+            const audioOutputs = devs.filter(d => d.kind === 'audiooutput');
+            const videoInputs = devs.filter(d => d.kind === 'videoinput');
+
+            setMicDevices(audioInputs);
+            setSpeakerDevices(audioOutputs);
+            setWebcamDevices(videoInputs);
+
+            console.log(`Devices reloaded: ${audioInputs.length} mics, ${audioOutputs.length} speakers, ${videoInputs.length} webcams`);
+        } catch (error) {
+            console.error("Failed to reload devices:", error);
+        }
+    };
+
     // Selected device IDs - restored from localStorage
     const [selectedMicId, setSelectedMicId] = useState(() => localStorage.getItem('selectedMicId') || '');
     const [selectedSpeakerId, setSelectedSpeakerId] = useState(() => localStorage.getItem('selectedSpeakerId') || '');
     const [selectedWebcamId, setSelectedWebcamId] = useState(() => localStorage.getItem('selectedWebcamId') || '');
     const [showSettings, setShowSettings] = useState(false);
     const [currentProject, setCurrentProject] = useState('default');
+    const [timezone, setTimezone] = useState(() => localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+
+    const handleTimezoneChange = (newTimezone) => {
+        setTimezone(newTimezone);
+        localStorage.setItem('timezone', newTimezone);
+        socket.emit('update_settings', { timezone: newTimezone });
+    };
 
     // Modular Mode State
     const [isModularMode, setIsModularMode] = useState(false);
@@ -95,6 +126,7 @@ function App() {
         browser: { x: window.innerWidth / 2 - 300, y: window.innerHeight / 2 },
         kasa: { x: window.innerWidth / 2 + 350, y: window.innerHeight / 2 - 100 },
         printer: { x: window.innerWidth / 2 - 350, y: window.innerHeight / 2 - 100 },
+        biometricCapture: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
         tools: { x: window.innerWidth / 2, y: window.innerHeight - 100 } // Fixed bottom OFFSET
     });
 
@@ -106,13 +138,14 @@ function App() {
         browser: { w: 550, h: 380 },
         video: { w: 320, h: 180 },
         kasa: { w: 300, h: 380 }, // Approx
-        printer: { w: 380, h: 380 } // Approx
+        printer: { w: 380, h: 380 }, // Approx
+        biometricCapture: { w: 600, h: 500 } // Approx
     });
     const [activeDragElement, setActiveDragElement] = useState(null);
 
     // Z-Index Stacking Order (last element = highest z-index)
     const [zIndexOrder, setZIndexOrder] = useState([
-        'visualizer', 'chat', 'tools', 'video', 'cad', 'browser', 'kasa', 'printer'
+        'visualizer', 'chat', 'tools', 'video', 'cad', 'browser', 'kasa', 'printer', 'biometricCapture'
     ]);
 
     // Hand Control State
@@ -120,7 +153,7 @@ function App() {
     const [isPinching, setIsPinching] = useState(false);
     const [isHandTrackingEnabled, setIsHandTrackingEnabled] = useState(false); // DEFAULT OFF
     const [cursorSensitivity, setCursorSensitivity] = useState(2.0);
-    const [isCameraFlipped, setIsCameraFlipped] = useState(false); // Gesture control camera flip
+    const [isCameraFlipped, setIsCameraFlipped] = useState(true); // Gesture control camera flip (default mirrored for natural movement)
 
     // Refs for Loop Access (Avoiding Closure Staleness)
     const isHandTrackingEnabledRef = useRef(false); // DEFAULT OFF
@@ -329,9 +362,9 @@ function App() {
         socket.on('status', (data) => {
             addMessage('System', data.msg);
             // Update status bar based on backend messages
-            if (data.msg === 'A.D.A Started') {
+            if (data.msg === 'S.A.R.A Started') {
                 setStatus('Model Connected');
-            } else if (data.msg === 'A.D.A Stopped') {
+            } else if (data.msg === 'S.A.R.A Stopped') {
                 setStatus('Connected');
             }
         });
@@ -1340,6 +1373,34 @@ function App() {
         setShowPrinterWindow(!showPrinterWindow);
     };
 
+    const toggleBiometricCapture = () => {
+        console.log('[APP DEBUG] toggleBiometricCapture llamado - Estado actual:', showBiometricCapture);
+        console.log('[APP DEBUG] Socket disponible:', !!socket);
+        console.log('[APP DEBUG] Socket conectado:', socket?.connected);
+        setShowBiometricCapture(!showBiometricCapture);
+    };
+
+    const toggleBiometricTest = () => {
+        console.log('[APP DEBUG] toggleBiometricTest llamado - Estado actual:', useBiometricTest);
+        setUseBiometricTest(!useBiometricTest);
+    };
+
+    const toggleFixedVersion = () => {
+        console.log('[APP DEBUG] toggleFixedVersion llamado - Estado actual:', useFixedVersion);
+        setUseFixedVersion(!useFixedVersion);
+    };
+
+    const handleBiometricComplete = () => {
+        console.log('[APP DEBUG] handleBiometricComplete llamado');
+        setShowBiometricCapture(false);
+        addMessage('System', 'Perfil biométrico generado exitosamente');
+    };
+
+    const handleBiometricCancel = () => {
+        console.log('[APP DEBUG] handleBiometricCancel llamado');
+        setShowBiometricCapture(false);
+    };
+
 
 
     return (
@@ -1397,7 +1458,7 @@ function App() {
             <div className="z-50 flex items-center justify-between p-2 border-b border-cyan-500/20 bg-black/40 backdrop-blur-md select-none sticky top-0" style={{ WebkitAppRegion: 'drag' }}>
                 <div className="flex items-center gap-4 pl-2">
                     <h1 className="text-xl font-bold tracking-[0.2em] text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                        A.D.A
+                        S.A.R.A
                     </h1>
                     <div className="text-[10px] text-cyan-700 border border-cyan-900 px-1 rounded">
                         V2.0.0
@@ -1527,6 +1588,9 @@ function App() {
                         isCameraFlipped={isCameraFlipped}
                         setIsCameraFlipped={setIsCameraFlipped}
                         handleFileUpload={handleFileUpload}
+                        onReloadDevices={reloadDevices}
+                        timezone={timezone}
+                        setTimezone={handleTimezoneChange}
                         onClose={() => setShowSettings(false)}
                     />
                 )}
@@ -1644,6 +1708,12 @@ function App() {
                         showCadWindow={showCadWindow}
                         onToggleBrowser={() => setShowBrowserWindow(!showBrowserWindow)}
                         showBrowserWindow={showBrowserWindow}
+                        onToggleBiometricCapture={toggleBiometricCapture}
+                        showBiometricCapture={showBiometricCapture}
+                        onToggleBiometricTest={toggleBiometricTest}
+                        useBiometricTest={useBiometricTest}
+                        onToggleFixedVersion={toggleFixedVersion}
+                        useFixedVersion={useFixedVersion}
                         activeDragElement={activeDragElement}
                         position={elementPositions.tools}
                         onMouseDown={(e) => handleMouseDown(e, 'tools')}
@@ -1675,6 +1745,39 @@ function App() {
                         setActiveDragElement={setActiveDragElement}
                         zIndex={getZIndex('printer')}
                     />
+                )}
+
+                {/* Biometric Capture Window */}
+                {showBiometricCapture && (
+                    <>
+                        {console.log('[APP DEBUG] Renderizando componente biométrico:', {
+                            useTest: useBiometricTest,
+                            useFixed: useFixedVersion,
+                            socket: !!socket,
+                            socketConnected: socket?.connected,
+                            onComplete: !!handleBiometricComplete,
+                            onCancel: !!handleBiometricCancel
+                        })}
+                        {useBiometricTest ? (
+                            <BiometricTest
+                                socket={socket}
+                                onComplete={handleBiometricComplete}
+                                onCancel={handleBiometricCancel}
+                            />
+                        ) : useFixedVersion ? (
+                            <BiometricCaptureFixed
+                                socket={socket}
+                                onComplete={handleBiometricComplete}
+                                onCancel={handleBiometricCancel}
+                            />
+                        ) : (
+                            <BiometricCapture
+                                socket={socket}
+                                onComplete={handleBiometricComplete}
+                                onCancel={handleBiometricCancel}
+                            />
+                        )}
+                    </>
                 )}
 
                 {/* Memory Prompt removed - memory is now actively saved to project */}

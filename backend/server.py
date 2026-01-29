@@ -16,15 +16,22 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
+import cv2
+import numpy as np
+
+# Initialize logging system - MUST BE BEFORE OTHER IMPORTS THAT GENERATE LOGS
+from logger import init_logger
+init_logger(log_dir="../logs", log_file_prefix="sara_backend")
 
 
 
-# Ensure we can import ada
+# Ensure we can import SARA
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import ada
+import sara
 from authenticator import FaceAuthenticator
 from kasa_agent import KasaAgent
+from generate_biometric import BiometricGeneratorSocket
 
 # Create a Socket.IO server
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
@@ -55,6 +62,8 @@ audio_loop = None
 loop_task = None
 authenticator = None
 kasa_agent = KasaAgent()
+biometric_generator = None
+biometric_client_sid = None
 SETTINGS_FILE = "settings.json"
 
 DEFAULT_SETTINGS = {
@@ -71,7 +80,9 @@ DEFAULT_SETTINGS = {
     },
     "printers": [], # List of {host, port, name, type}
     "kasa_devices": [], # List of {ip, alias, model}
-    "camera_flipped": False # Invert cursor horizontal direction
+    "camera_flipped": False, # Invert cursor horizontal direction
+    "timezone": "UTC", # User's timezone
+    "location": "Ubicación desconocida" # User's location
 }
 
 SETTINGS = DEFAULT_SETTINGS.copy()
@@ -126,12 +137,12 @@ async def startup_event():
 
 @app.get("/status")
 async def status():
-    return {"status": "running", "service": "A.D.A Backend"}
+    return {"status": "running", "service": "S.A.R.A Backend"}
 
 @sio.event
 async def connect(sid, environ):
     print(f"Client connected: {sid}")
-    await sio.emit('status', {'msg': 'Connected to A.D.A Backend'}, room=sid)
+    await sio.emit('status', {'msg': 'Connected to S.A.R.A Backend'}, room=sid)
 
     global authenticator
     
@@ -203,7 +214,7 @@ async def start_audio(sid, data=None):
              loop_task = None
         else:
              print("Audio loop already running. Re-connecting client to session.")
-             await sio.emit('status', {'msg': 'A.D.A Already Running'})
+             await sio.emit('status', {'msg': 'S.A.R.A Already Running'})
              return
 
 
@@ -226,7 +237,7 @@ async def start_audio(sid, data=None):
         
     # Callback to send Transcription data to frontend
     def on_transcription(data):
-        # data = {"sender": "User"|"ADA", "text": "..."}
+        # data = {"sender": "User"|"SARA", "text": "..."}
         asyncio.create_task(sio.emit('transcription', data))
 
     # Callback to send Confirmation Request to frontend
@@ -268,10 +279,10 @@ async def start_audio(sid, data=None):
         print(f"Sending Error to frontend: {msg}")
         asyncio.create_task(sio.emit('error', {'msg': msg}))
 
-    # Initialize ADA
+    # Initialize SARA
     try:
         print(f"Initializing AudioLoop with device_index={device_index}")
-        audio_loop = ada.AudioLoop(
+        audio_loop = sara.AudioLoop(
             video_mode="none", 
             on_audio_data=on_audio_data,
             on_cad_data=on_cad_data,
@@ -286,13 +297,14 @@ async def start_audio(sid, data=None):
 
             input_device_index=device_index,
             input_device_name=device_name,
-            kasa_agent=kasa_agent
+            kasa_agent=kasa_agent,
+            settings=SETTINGS
         )
         print("AudioLoop initialized successfully.")
 
         # Apply current permissions
         audio_loop.update_permissions(SETTINGS["tool_permissions"])
-        
+    
         # Check initial mute state
         if data and data.get('muted', False):
             print("Starting with Audio Paused")
@@ -313,8 +325,8 @@ async def start_audio(sid, data=None):
         
         loop_task.add_done_callback(handle_loop_exit)
         
-        print("Emitting 'A.D.A Started'")
-        await sio.emit('status', {'msg': 'A.D.A Started'})
+        print("Emitting 'SARA Started'")
+        await sio.emit('status', {'msg': 'SARA Started'})
 
         # Load saved printers
         saved_printers = SETTINGS.get("printers", [])
@@ -333,7 +345,7 @@ async def start_audio(sid, data=None):
         asyncio.create_task(monitor_printers_loop())
         
     except Exception as e:
-        print(f"CRITICAL ERROR STARTING ADA: {e}")
+        print(f"CRITICAL ERROR STARTING SARA: {e}")
         import traceback
         traceback.print_exc()
         await sio.emit('error', {'msg': f"Failed to start: {str(e)}"})
@@ -379,7 +391,7 @@ async def stop_audio(sid):
         audio_loop.stop() 
         print("Stopping Audio Loop")
         audio_loop = None
-        await sio.emit('status', {'msg': 'A.D.A Stopped'})
+        await sio.emit('status', {'msg': 'S.A.R.A Stopped'})
 
 @sio.event
 async def pause_audio(sid):
@@ -717,7 +729,7 @@ async def discover_printers(sid):
             return
         else:
             await sio.emit('printer_list', [])
-            await sio.emit('status', {'msg': "Connect to A.D.A to enable printer discovery"})
+            await sio.emit('status', {'msg': "Connect to S.A.R.A to enable printer discovery"})
             return
         
     try:
@@ -948,18 +960,270 @@ async def update_settings(sid, data):
         SETTINGS["face_auth_enabled"] = data["face_auth_enabled"]
         # If turned OFF, maybe emit auth status true?
         if not data["face_auth_enabled"]:
-             await sio.emit('auth_status', {'authenticated': True})
-             # Stop auth loop if running?
-             if authenticator:
-                 authenticator.stop() 
-
+            await sio.emit('auth_status', {'authenticated': True})
+            # Stop auth loop if running?
+            if authenticator:
+                authenticator.stop() 
+    
     if "camera_flipped" in data:
         SETTINGS["camera_flipped"] = data["camera_flipped"]
         print(f"[SERVER] Camera flip set to: {data['camera_flipped']}")
-
+    
+    if "timezone" in data:
+        SETTINGS["timezone"] = data["timezone"]
+        print(f"[SERVER] Timezone set to: {data['timezone']}")
+    
+    if "location" in data:
+        SETTINGS["location"] = data["location"]
+        print(f"[SERVER] Location set to: {data['location']}")
+        # Actualizar system prompt en sara.py
+        from sara import reload_system_prompt
+        reload_system_prompt(SETTINGS)
+    
     save_settings()
     # Broadcast new full settings
     await sio.emit('settings', SETTINGS)
+
+
+# --- BIOMETRIC CAPTURE EVENTS ---
+
+@sio.event
+async def biometric_command(sid, data):
+    """
+    Maneja comandos del frontend para la captura biométrica.
+    
+    Comandos soportados:
+    - start_capture: Inicia la captura de video para un ángulo específico
+    - capture_photo: Captura una foto del ángulo actual
+    - complete_capture: Completa el proceso de generación de perfil
+    - cancel_capture: Cancela el proceso de captura
+    """
+    global biometric_generator, biometric_client_sid
+    
+    command = data.get('command')
+    print(f"[BIOMETRIC DEBUG] ===========================================")
+    print(f"[BIOMETRIC DEBUG] Comando recibido: {command}")
+    print(f"[BIOMETRIC DEBUG] Data completa: {data}")
+    print(f"[BIOMETRIC DEBUG] SID: {sid}")
+    print(f"[BIOMETRIC DEBUG] biometric_generator existe: {biometric_generator is not None}")
+    print(f"[BIOMETRIC DEBUG] biometric_client_sid: {biometric_client_sid}")
+    
+    try:
+        if command == 'start_capture':
+            # Iniciar captura de video para un ángulo específico
+            camera_index = data.get('camera_index', 0)
+            angle = data.get('angle', 'frontal')
+            print(f"[BIOMETRIC DEBUG] Procesando start_capture con angle={angle}, camera_index={camera_index}")
+            
+            if biometric_generator is None:
+                print(f"[BIOMETRIC DEBUG] Creando nueva instancia de BiometricGeneratorSocket")
+                # Crear generador con callbacks
+                def on_frame(frame_b64):
+                    print(f"[BIOMETRIC DEBUG] Callback on_frame llamado, tamaño: {len(frame_b64) if frame_b64 else 0}")
+                    asyncio.create_task(sio.emit('biometric_frame', {'image': frame_b64}))
+                
+                def on_face_detected(detected):
+                    print(f"[BIOMETRIC DEBUG] Callback on_face_detected llamado: {detected}")
+                    asyncio.create_task(sio.emit('face_detected', {'detected': detected}))
+                
+                def on_status(status_data):
+                    print(f"[BIOMETRIC DEBUG] Callback on_status llamado: {status_data}")
+                    asyncio.create_task(sio.emit('biometric_status', status_data))
+                
+                biometric_generator = BiometricGeneratorSocket(
+                    on_frame_callback=on_frame,
+                    on_face_detected_callback=on_face_detected,
+                    on_status_callback=on_status
+                )
+                print(f"[BIOMETRIC DEBUG] BiometricGeneratorSocket creado exitosamente")
+            
+            # Iniciar captura si no está corriendo
+            print(f"[BIOMETRIC DEBUG] biometric_generator.is_running: {biometric_generator.is_running}")
+            if not biometric_generator.is_running:
+                print(f"[BIOMETRIC DEBUG] Iniciando captura de video...")
+                success = biometric_generator.start_capture(camera_index)
+                print(f"[BIOMETRIC DEBUG] start_capture() retornó: {success}")
+                if not success:
+                    print(f"[BIOMETRIC DEBUG] ERROR: No se pudo iniciar la captura")
+                    await sio.emit('error', {'msg': 'No se pudo iniciar la captura de video'})
+                    return
+            else:
+                print(f"[BIOMETRIC DEBUG] La captura ya está corriendo")
+            
+            biometric_client_sid = sid
+            print(f"[BIOMETRIC DEBUG] biometric_client_sid establecido a: {sid}")
+            print(f"[BIOMETRIC] Captura iniciada para ángulo: {angle}")
+        
+        elif command == 'capture_photo':
+            # Capturar foto del ángulo actual
+            angle = data.get('angle', 'frontal')
+            
+            if not biometric_generator:
+                await sio.emit('error', {'msg': 'El generador biométrico no está inicializado'})
+                return
+            
+            if not biometric_generator.is_running:
+                await sio.emit('error', {'msg': 'La captura no está iniciada'})
+                return
+            
+            # Capturar frame actual
+            ret, frame = biometric_generator.cap.read()
+            if not ret:
+                await sio.emit('error', {'msg': 'No se pudo capturar el frame'})
+                return
+            
+            # Detectar rostro y extraer landmarks
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            landmarks = biometric_generator._extract_landmarks(rgb_frame)
+            
+            if landmarks is None:
+                await sio.emit('error', {'msg': 'No se detectó rostro en la foto'})
+                return
+            
+            # Guardar foto
+            if not biometric_generator.user_name:
+                # Usar nombre por defecto si no se ha establecido
+                biometric_generator.set_user_name(f"user_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+            
+            if not biometric_generator.profile_dir:
+                biometric_generator.profile_dir = os.path.join(biometric_generator.PROFILES_DIR, biometric_generator.user_name)
+                if not os.path.exists(biometric_generator.profile_dir):
+                    os.makedirs(biometric_generator.profile_dir)
+            
+            # Mapear ángulo a nombre de archivo
+            angle_map = {
+                'frontal': 'frontal.jpg',
+                'izquierda': 'izquierda.jpg',
+                'derecha': 'derecha.jpg'
+            }
+            
+            filename = angle_map.get(angle, f'{angle}.jpg')
+            photo_path = os.path.join(biometric_generator.profile_dir, filename)
+            cv2.imwrite(photo_path, frame)
+            
+            photo_info = {
+                'angle': angle,
+                'filename': filename,
+                'path': photo_path,
+                'landmarks': landmarks.tolist(),
+                'landmark_count': len(landmarks)
+            }
+            
+            biometric_generator.captured_photos.append(photo_info)
+            biometric_generator.captured_landmarks.append(landmarks)
+            
+            print(f"[BIOMETRIC] Foto capturada: {angle}")
+            await sio.emit('biometric_status', {
+                'state': 'photo_captured',
+                'angle': angle,
+                'message': f'Foto capturada: {angle}'
+            })
+        
+        elif command == 'complete_capture':
+            # Completar el proceso de generación de perfil
+            if not biometric_generator:
+                await sio.emit('error', {'msg': 'El generador biométrico no está inicializado'})
+                return
+            
+            if not biometric_generator.captured_photos:
+                await sio.emit('error', {'msg': 'No hay fotos capturadas'})
+                return
+            
+            try:
+                # Calcular landmarks promedio
+                if biometric_generator.captured_landmarks:
+                    avg_landmarks = np.mean(biometric_generator.captured_landmarks, axis=0)
+                else:
+                    avg_landmarks = None
+                
+                # Crear archivo de perfil JSON
+                profile_data = {
+                    "name": biometric_generator.user_name,
+                    "created_at": datetime.now().isoformat(),
+                    "model": "mediapipe_face_landmarker_v1",
+                    "photos": biometric_generator.captured_photos,
+                    "average_landmarks": avg_landmarks.tolist() if avg_landmarks is not None else None,
+                    "total_landmarks": len(avg_landmarks) if avg_landmarks is not None else 0,
+                    "photo_count": len(biometric_generator.captured_photos)
+                }
+                
+                profile_json_path = os.path.join(biometric_generator.profile_dir, "profile.json")
+                with open(profile_json_path, 'w', encoding='utf-8') as f:
+                    json.dump(profile_data, f, indent=2, ensure_ascii=False)
+                
+                # Crear reference.jpg para compatibilidad con el sistema existente
+                frontal_photo = None
+                for photo in biometric_generator.captured_photos:
+                    if photo["angle"] == "frontal":
+                        frontal_photo = photo
+                        break
+                
+                reference_path = None
+                if frontal_photo:
+                    reference_path = os.path.join(os.path.dirname(__file__), "reference.jpg")
+                    cv2.imwrite(reference_path, cv2.imread(frontal_photo["path"]))
+                
+                # Emitir estado de éxito
+                await sio.emit('biometric_status', {
+                    'state': 'success',
+                    'user_name': biometric_generator.user_name,
+                    'profile_dir': biometric_generator.profile_dir,
+                    'photos_count': len(biometric_generator.captured_photos),
+                    'landmarks_count': len(avg_landmarks) if avg_landmarks is not None else 0,
+                    'message': 'Perfil generado exitosamente'
+                })
+                
+                # Detener captura después de completar
+                biometric_generator.stop_capture()
+                biometric_generator = None
+                biometric_client_sid = None
+                
+                print(f"[BIOMETRIC] Perfil completado: {biometric_generator.user_name}")
+                
+            except Exception as e:
+                print(f"[BIOMETRIC] Error al completar perfil: {e}")
+                await sio.emit('error', {'msg': f'Error al completar perfil: {str(e)}'})
+        
+        elif command == 'cancel_capture':
+            # Cancelar el proceso de captura
+            print(f"[BIOMETRIC DEBUG] Procesando cancel_capture")
+            if biometric_generator:
+                print(f"[BIOMETRIC DEBUG] Llamando cancel_capture() y stop_capture()")
+                biometric_generator.cancel_capture()
+                biometric_generator.stop_capture()
+                biometric_generator = None
+                biometric_client_sid = None
+                print(f"[BIOMETRIC DEBUG] Enviando biometric_status cancelled")
+                await sio.emit('biometric_status', {
+                    'state': 'cancelled',
+                    'message': 'Captura cancelada'
+                })
+                print("[BIOMETRIC] Captura cancelada")
+            else:
+                print(f"[BIOMETRIC DEBUG] ERROR: biometric_generator es None")
+                await sio.emit('error', {'msg': 'El generador biométrico no está inicializado'})
+        
+        else:
+            await sio.emit('error', {'msg': f'Comando desconocido: {command}'})
+    
+    except Exception as e:
+        print(f"[BIOMETRIC] Error al procesar comando: {e}")
+        import traceback
+        traceback.print_exc()
+        await sio.emit('error', {'msg': f'Error en comando biométrico: {str(e)}'})
+
+
+@sio.event
+async def disconnect(sid):
+    print(f"Client disconnected: {sid}")
+    
+    # Si el cliente desconectado era el cliente biométrico, limpiar
+    global biometric_generator, biometric_client_sid
+    if biometric_client_sid == sid and biometric_generator:
+        print("[BIOMETRIC] Cliente biométrico desconectado, limpiando...")
+        biometric_generator.stop_capture()
+        biometric_generator = None
+        biometric_client_sid = None
 
 
 # Deprecated/Mapped for compatibility if frontend still uses specific events
@@ -980,10 +1244,11 @@ async def update_tool_permissions(sid, data):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "server:app_socketio", 
-        host="127.0.0.1", 
-        port=8000, 
+        "server:app_socketio",
+        host="127.0.0.1",
+        port=8000,
         reload=False, # Reload enabled causes spawn of worker which might miss the event loop policy patch
         loop="asyncio",
-        reload_excludes=["temp_cad_gen.py", "output.stl", "*.stl"]
+        reload_excludes=["temp_cad_gen.py", "output.stl", "*.stl"],
+        log_config=None  # Disable uvicorn's default logging to avoid isatty() issues when running from Electron
     )
