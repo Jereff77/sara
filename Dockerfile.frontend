@@ -1,0 +1,21 @@
+# Usar imagen de Node.js
+FROM node:18-alpine
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package.json package-lock.json ./
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el código fuente
+COPY . .
+
+# Exponer el puerto de Vite
+EXPOSE 5173
+
+# Comando para ejecutar Vite en modo desarrollo (accesible desde fuera del contenedor)
+# Nota: Usamos 'npx vite' directamente para evitar ejecutar Electron
+CMD ["npx", "vite", "--host"]

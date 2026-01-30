@@ -21,8 +21,19 @@ import SettingsWindow from './components/SettingsWindow';
 
 
 
-const socket = io('http://localhost:8000');
-const { ipcRenderer } = window.require('electron');
+const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const socket = io(socketUrl);
+
+// Safe Electron import for Web compatibility
+let ipcRenderer = null;
+try {
+    if (window.require) {
+        const electron = window.require('electron');
+        ipcRenderer = electron.ipcRenderer;
+    }
+} catch (e) {
+    console.warn("Running in Web Mode (Electron not available)");
+}
 
 function App() {
     const [status, setStatus] = useState('Disconnected');

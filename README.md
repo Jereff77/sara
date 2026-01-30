@@ -398,3 +398,41 @@ sara/
 
 - Ejecuta el backend por separado (`python backend/server.py`) para ver los registros de Python.
 - Usa `npm run dev` sin Electron durante el desarrollo del frontend (recarga más rápida).
+
+---
+
+## 🐳 Ejecutar con Docker
+
+Puedes ejecutar el entorno de desarrollo utilizando Docker Compose. Esto levantará el backend y el frontend (versión web) en contenedores.
+
+### Requisitos Previos
+- Docker Desktop instalado y ejecutándose.
+- Archivo `.env` configurado con tu `GEMINI_API_KEY`.
+
+### Pasos
+1. Construir y levantar los contenedores:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Acceder a la aplicación:
+   - **Frontend (Web)**: [http://localhost:5173](http://localhost:5173)
+   - **Backend API**: [http://localhost:8000](http://localhost:8000)
+
+### Notas sobre Docker
+- **Hardware**: El acceso a la cámara y al micrófono desde Docker en Windows/Mac tiene limitaciones significativas y puede no funcionar directamente sin configuración avanzada (paso de dispositivos USB, X11 forwarding, etc.).
+- **Electron**: Esta configuración ejecuta la versión **Web** de la interfaz (React + Vite), no la aplicación de escritorio Electron.
+- **Persistencia**: El código fuente se monta como volumen, por lo que los cambios en tu editor local se reflejarán en el contenedor (Hot Reloading).
+
+## ☁️ Despliegue en EasyPanel (Producción)
+
+Para desplegar en EasyPanel u otros orquestadores como Coolify/Portainer, utiliza la configuración de producción.
+
+1.  **Archivo Compose**: Utiliza `docker-compose.prod.yml`.
+2.  **Configuración**:
+    *   **Backend**: Persistencia de datos configurada para `projects/`, `long_term_memory/` y `logs/`.
+    *   **Frontend**: Servido vía Nginx en el puerto 80.
+3.  **Variables de Entorno**: Asegúrate de añadir tu `GEMINI_API_KEY` en el panel de configuración de EasyPanel.
+
+**Nota Importante**: En producción, la aplicación Web no tendrá acceso a dispositivos locales (micrófono/cámara) del servidor. El acceso dependerá del navegador del cliente (tu PC/móvil), pero la funcionalidad de servidor (como control de dispositivos Kasa locales del servidor) funcionará si están en la misma red.
+

@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    volumes:
+      - projects_data:/app/projects
+      - memory_data:/app/long_term_memory
+      - logs_data:/app/logs
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app_network
+
+volumes:
+  projects_data:
+  memory_data:
+  logs_data:
+
+networks:
+  app_network:
+    driver: bridge

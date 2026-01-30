@@ -1243,9 +1243,10 @@ async def update_tool_permissions(sid, data):
     await sio.emit('tool_permissions', SETTINGS["tool_permissions"])
 
 if __name__ == "__main__":
+    host = os.getenv("HOST", "127.0.0.1")
     uvicorn.run(
         "server:app_socketio",
-        host="127.0.0.1",
+        host=host,
         port=8000,
         reload=False, # Reload enabled causes spawn of worker which might miss the event loop policy patch
         loop="asyncio",
