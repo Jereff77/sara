@@ -1,4 +1,4 @@
-# SARA V2 - Advanced Recognition Assistant
+# SARA V2 - Asistente de Reconocimiento Avanzado
 
 ![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11-blue?logo=python)
 ![React](https://img.shields.io/badge/React-18.2-61DAFB?logo=react)
@@ -6,40 +6,40 @@
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Native%20Audio-4285F4?logo=google)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> **SARA** = **S**ophisticated **A**I **R**ecognition **A**ssistant
+> **SARA** = **S**ophisticated **A**I **R**ecognition **A**ssistant (Asistente de Reconocimiento de IA Sofisticado)
 
-SARA V2 is a sophisticated AI assistant designed for multimodal interaction. It combines Google's Gemini 2.5 Native Audio with computer vision, gesture control, and 3D CAD generation in a Electron desktop application.
-
----
-
-## 🌟 Capabilities at a Glance
-
-| Feature | Description | Technology |
-|---------|-------------|------------|
-| **🗣️ Low-Latency Voice** | Real-time conversation with interrupt handling | Gemini 2.5 Native Audio |
-| **🧊 Parametric CAD** | Editable 3D model generation from voice prompts | `build123d` → STL |
-| **🖨️ 3D Printing** | Slicing and wireless print job submission | OrcaSlicer + Moonraker/OctoPrint |
-| **🖐️ Minority Report UI** | Gesture-controlled window manipulation | MediaPipe Hand Tracking |
-| **👁️ Face Authentication** | Secure local biometric login | MediaPipe Face Landmarker |
-| **🌐 Web Agent** | Autonomous browser automation | Playwright + Chromium |
-| **🏠 Smart Home** | Voice control for TP-Link Kasa devices | `python-kasa` |
-| **📁 Project Memory** | Persistent context across sessions | File-based JSON storage |
-
-### 🖐️ Gesture Control Details
-
-SARA's "Minority Report" interface uses your webcam to detect hand gestures:
-
-| Gesture | Action |
-|---------|--------|
-| 🤏 **Pinch** | Confirm action / click |
-| ✋ **Open Palm** | Release the window |
-| ✊ **Close Fist** | "Select" and grab a UI window to drag it |
-
-> **Tip**: Enable the video feed window to see the hand tracking overlay.
+SARA V2 es un asistente de IA sofisticado diseñado para la interacción multimodal. Combina el audio nativo de Gemini 2.5 de Google con visión por computadora, control por gestos y generación de CAD 3D en una aplicación de escritorio Electron.
 
 ---
 
-## 🏗️ Architecture Overview
+## 🌟 Capacidades de un vistazo
+
+| Característica | Descripción | Tecnología |
+|---|---|---|
+| **🗣️ Voz de Baja Latencia** | Conversación en tiempo real con manejo de interrupciones | Gemini 2.5 Native Audio |
+| **🧊 CAD Paramétrico** | Generación de modelos 3D editables a partir de instrucciones de voz | `build123d` → STL |
+| **🖨️ Impresión 3D** | Laminado y envío inalámbrico de trabajos de impresión | OrcaSlicer + Moonraker/OctoPrint |
+| **🖐️ UI "Minority Report"** | Manipulación de ventanas controlada por gestos | MediaPipe Hand Tracking |
+| **👁️ Autenticación Facial** | Inicio de sesión biométrico local seguro | MediaPipe Face Landmarker |
+| **🌐 Agente Web** | Automatización autónoma del navegador | Playwright + Chromium |
+| **🏠 Casa Inteligente** | Control por voz para dispositivos TP-Link Kasa | `python-kasa` |
+| **📁 Memoria de Proyecto** | Contexto persistente entre sesiones | Almacenamiento JSON basado en archivos |
+
+### 🖐️ Detalles del Control por Gestos
+
+La interfaz estilo "Minority Report" de SARA utiliza tu cámara web para detectar gestos de la mano:
+
+| Gesto | Acción |
+|---|---|
+| 🤏 **Pellizcar** | Confirmar acción / hacer clic |
+| ✋ **Palma Abierta** | Soltar la ventana |
+| ✊ **Puño Cerrado** | "Seleccionar" y agarrar una ventana de la interfaz para arrastrarla |
+
+> **Consejo**: Habilita la ventana de transmisión de video para ver la superposición del seguimiento de manos.
+
+---
+
+## 🏗️ Resumen de la Arquitectura
 
 ```mermaid
 graph TB
@@ -76,362 +76,325 @@ graph TB
 
 ---
 
-## ⚡ TL;DR Quick Start (Experienced Developers)
+## ⚡ TL;DR Inicio Rápido (Desarrolladores Experimentados)
 
 <details>
-<summary>Click to expand quick setup commands</summary>
+<summary>Haga clic para expandir los comandos de configuración rápida</summary>
 
 ```bash
-# 1. Clone and enter
-git clone https://github.com/nazirlouis/ada_v2.git && cd ada_v2
+# 1. Clonar y entrar
+git clone https://github.com/Jereff77/sara.git && cd sara
 
-# 2. Create Python environment (Python 3.11)
-conda create -n ada_v2 python=3.11 -y && conda activate ada_v2
-brew install portaudio  # macOS only (for PyAudio)
+# 2. Crear entorno Python (Python 3.11)
+conda create -n sara python=3.11 -y && conda activate sara
+brew install portaudio  # solo macOS (para PyAudio)
 pip install -r requirements.txt
 playwright install chromium
 
-# 3. Setup frontend
+# 3. Configurar frontend
 npm install
 
-# 4. Create .env file
-echo "GEMINI_API_KEY=your_key_here" > .env
+# 4. Crear archivo .env
+echo "GEMINI_API_KEY=tu_clave_aqui" > .env
 
-# 5. Run!
-conda activate ada_v2 && npm run dev
+# 5. ¡Ejecutar!
+conda activate sara && npm run dev
 ```
 
 </details>
 
 ---
 
-## 🛠️ Installation Requirements
+## 🛠️ Requisitos de Instalación
 
-### 🆕 Absolute Beginner Setup (Start Here)
-If you have never coded before, follow these steps first!
+### 🆕 Configuración para Principiantes Absolutos (Empieza Aquí)
+Si nunca has programado antes, ¡sigue estos pasos primero!
 
-**Step 1: Install Visual Studio Code (The Editor)**
-- Download and install [VS Code](https://code.visualstudio.com/). This is where you will write code and run commands.
+**Paso 1: Instalar Visual Studio Code (El Editor)**
+- Descarga e instala [VS Code](https://code.visualstudio.com/). Aquí es donde escribirás código y ejecutarás comandos.
 
-**Step 2: Install Anaconda (The Manager)**
-- Download [Miniconda](https://docs.conda.io/en/latest/miniconda.html) (a lightweight version of Anaconda).
-- This tool allows us to create isolated "playgrounds" (environments) for our code so different projects don't break each other.
-- **Windows Users**: During install, check "Add Anaconda to my PATH environment variable" (even if it says not recommended, it makes things easier for beginners).
+**Paso 2: Instalar Anaconda (El Gestor)**
+- Descarga [Miniconda](https://docs.conda.io/en/latest/miniconda.html) (una versión ligera de Anaconda).
+- Esta herramienta nos permite crear "patios de recreo" (entornos) aislados para nuestro código para que diferentes proyectos no se rompan entre sí.
+- **Usuarios de Windows**: Durante la instalación, marca "Add Anaconda to my PATH environment variable" (aunque diga que no se recomienda, facilita las cosas para los principiantes).
 
-**Step 3: Install Git (The Downloader)**
-- **Windows**: Download [Git for Windows](https://git-scm.com/download/win).
-- **Mac**: Open the "Terminal" app (Cmd+Space, type Terminal) and type `git`. If not installed, it will ask to install developer tools—say yes.
+**Paso 3: Instalar Git (El Descargador)**
+- **Windows**: Descarga [Git para Windows](https://git-scm.com/download/win).
+- **Mac**: Abre la aplicación "Terminal" (Cmd+Espacio, escribe Terminal) y escribe `git`. Si no está instalado, te pedirá instalar herramientas de desarrollador—di que sí.
 
-**Step 4: Get the Code**
-1. Open your terminal (or Command Prompt on Windows).
-2. Type this command and hit Enter:
+**Paso 4: Obtener el Código**
+1. Abre tu terminal (o Símbolo del sistema en Windows).
+2. Escribe este comando y presiona Enter:
    ```bash
-   git clone https://github.com/nazirlouis/ada_v2.git
+   git clone https://github.com/Jereff77/sara.git
    ```
-3. This creates a folder named `ada_v2`.
+3. Esto crea una carpeta llamada `sara`.
 
-**Step 5: Open in VS Code**
-1. Open VS Code.
-2. Go to **File > Open Folder**.
-3. Select the `ada_v2` folder you just downloaded.
-4. Open the internal terminal: Press `Ctrl + ~` (tilde) or go to **Terminal > New Terminal**.
+**Paso 5: Abrir en VS Code**
+1. Abre VS Code.
+2. Ve a **Archivo > Abrir Carpeta**.
+3. Selecciona la carpeta `sara` que acabas de descargar.
+4. Abre la terminal interna: Presiona `Ctrl + ~` (tilde) o ve a **Terminal > Nueva Terminal**.
 
 ---
 
-### ⚠️ Technical Prerequisites
-Once you have the basics above, continue here.
+### ⚠️ Prerrequisitos Técnicos
+Una vez que tengas los conceptos básicos anteriores, continúa aquí.
 
-### 1. System Dependencies
+### 1. Dependencias del Sistema
 
 **MacOS:**
 ```bash
-# Audio Input/Output support (PyAudio)
+# Soporte de Entrada/Salida de Audio (PyAudio)
 brew install portaudio
 ```
 
 **Windows:**
-- No additional system dependencies required!
+- ¡No se requieren dependencias adicionales del sistema!
 
-### 2. Python Environment
-Create a single Python 3.11 environment:
+### 2. Entorno Python
+Crea un único entorno Python 3.11:
 
 ```bash
-conda create -n ada_v2 python=3.11
-conda activate ada_v2
+conda create -n sara python=3.11
+conda activate sara
 
-# Install all dependencies
+# Instalar todas las dependencias
 pip install -r requirements.txt
 
-# Install Playwright browsers
+# Instalar navegadores Playwright
 playwright install chromium
 ```
 
-### 3. Frontend Setup
-Requires **Node.js 18+** and **npm**. Download from [nodejs.org](https://nodejs.org/) if not installed.
+### 3. Configuración del Frontend
+Requiere **Node.js 18+** y **npm**. Descárgalo de [nodejs.org](https://nodejs.org/) si no está instalado.
 
 ```bash
-# Verify Node is installed
-node --version  # Should show v18.x or higher
+# Verificar que Node está instalado
+node --version  # Debería mostrar v18.x o superior
 
-# Install frontend dependencies
+# Instalar dependencias del frontend
 npm install
 ```
 
-### 4. 🔐 Face Authentication Setup
-To use the secure voice features, SARA needs to know what you look like.
+### 4. 🔐 Configuración de Autenticación Facial
+Para utilizar las funciones de voz seguras, SARA necesita saber cómo te ves.
 
-1. Take a clear photo of your face (or use an existing one).
-2. Rename the file to `reference.jpg`.
-3. Drag and drop this file into the `ada_v2/backend` folder.
-4. (Optional) You can toggle this feature on/off in `settings.json` by changing `"face_auth_enabled": true/false`.
+1. Toma una foto clara de tu cara (o usa una existente).
+2. Cambia el nombre del archivo a `reference.jpg`.
+3. Arrastra y suelta este archivo en la carpeta `sara/backend`.
+4. (Opcional) Puedes activar/desactivar esta función en `settings.json` cambiando `"face_auth_enabled": true/false`.
 
 ---
 
-## ⚙️ Configuration (`settings.json`)
+## ⚙️ Configuración (`settings.json`)
 
-The system creates a `settings.json` file on first run. You can modify this to change behavior:
+El sistema crea un archivo `settings.json` en la primera ejecución. Puedes modificar esto para cambiar el comportamiento:
 
-| Key | Type | Description |
+| Clave | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `face_auth_enabled` | `bool` | If `true`, blocks all AI interaction until your face is recognized via the camera. |
-| `tool_permissions` | `obj` | Controls manual approval for specific tools. |
-| `tool_permissions.generate_cad` | `bool` | If `true`, requires you to click "Confirm" on the UI before generating CAD. |
-| `tool_permissions.run_web_agent` | `bool` | If `true`, requires confirmation before opening the browser agent. |
-| `tool_permissions.write_file` | `bool` | **Critical**: Requires confirmation before the AI writes code/files to disk. |
+| `face_auth_enabled` | `bool` | Si es `true`, bloquea toda interacción de IA hasta que tu cara sea reconocida a través de la cámara. |
+| `tool_permissions` | `obj` | Controla la aprobación manual para herramientas específicas. |
+| `tool_permissions.generate_cad` | `bool` | Si es `true`, requiere que hagas clic en "Confirmar" en la UI antes de generar CAD. |
+| `tool_permissions.run_web_agent` | `bool` | Si es `true`, requiere confirmación antes de abrir el agente del navegador. |
+| `tool_permissions.write_file` | `bool` | **Crítico**: Requiere confirmación antes de que la IA escriba código/archivos en el disco. |
 
 ---
 
-### 5. 🖨️ 3D Printer Setup
-SARA V2 can slice STL files and send them directly to your 3D printer.
+### 5. 🖨️ Configuración de Impresora 3D
+SARA V2 puede laminar archivos STL y enviarlos directamente a tu impresora 3D.
 
-**Supported Hardware:**
+**Hardware Soportado:**
 - **Klipper/Moonraker** (Creality K1, Voron, etc.)
-- **OctoPrint** instances
+- Instancias de **OctoPrint**
 - **PrusaLink** (Experimental)
 
-**Step 1: Install Slicer**
-SARA uses **OrcaSlicer** (recommended) or PrusaSlicer to generate G-code.
-1. Download and install [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer).
-2. Run it once to ensure profiles are created.
-3. SARA automatically detects the installation path.
+**Paso 1: Instalar Laminador (Slicer)**
+SARA utiliza **OrcaSlicer** (recomendado) o PrusaSlicer para generar código G.
+1. Descarga e instala [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer).
+2. Ejecútalo una vez para asegurarte de que se creen los perfiles.
+3. SARA detecta automáticamente la ruta de instalación.
 
-**Step 2: Connect Printer**
-1. Ensure your printer and computer are on the **same Wi-Fi network**.
-2. Open the **Printer Window** in SARA (Cube icon).
-3. SARA automatically scans for printers using mDNS.
-4. **Manual Connection**: If your printer isn't found, use the "Add Printer" button and enter the IP address (e.g., `192.168.1.50`).
-
----
-
-### 6. 🔑 Gemini API Key Setup
-SARA uses Google's Gemini API for voice and intelligence. You need a free API key.
-
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
-2. Sign in with your Google account.
-3. Click **"Create API Key"** and copy the generated key.
-4. Create a file named `.env` in the `ada_v2` folder (same level as `README.md`).
-5. Add this line to the file:
-   ```
-   GEMINI_API_KEY=your_api_key_here
-   ```
-6. Replace `your_api_key_here` with the key you copied.
-
-> **Note**: Keep this key private! Never commit your `.env` file to Git.
+**Paso 2: Conectar Impresora**
+1. Asegúrate de que tu impresora y computadora estén en la **misma red Wi-Fi**.
+2. Abre la **Ventana de Impresora** en SARA (icono de cubo).
+3. SARA escanea automáticamente en busca de impresoras usando mDNS.
+4. **Conexión Manual**: Si no se encuentra tu impresora, usa el botón "Añadir Impresora" e introduce la dirección IP (ej., `192.168.1.50`).
 
 ---
 
-## 🚀 Running SARA V2
+### 6. 🔑 Configuración de Clave API Gemini
+SARA utiliza la API Gemini de Google para voz e inteligencia. Necesitas una clave API gratuita.
 
-You have two options to run the app. Ensure your `ada_v2` environment is active!
+1. Ve a [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Inicia sesión con tu cuenta de Google.
+3. Haz clic en **"Create API Key"** y copia la clave generada.
+4. Crea un archivo llamado `.env` en la carpeta `sara` (al mismo nivel que `README.md`).
+5. Añade esta línea al archivo:
+   ```
+   GEMINI_API_KEY=tu_clave_api_aqui
+   ```
+6. Reemplaza `tu_clave_api_aqui` con la clave que copiaste.
 
-### Option 1: The "Easy" Way (Single Terminal)
-The app is smart enough to start the backend for you.
-1. Open your terminal in the `ada_v2` folder.
-2. Activate your environment: `conda activate ada_v2`
-3. Run:
+> **Nota**: ¡Mantén esta clave privada! Nunca hagas commit de tu archivo `.env` a Git.
+
+---
+
+## 🚀 Ejecutando SARA V2
+
+Tienes dos opciones para ejecutar la aplicación. ¡Asegúrate de que tu entorno `sara` esté activo!
+
+### Opción 1: La Forma "Fácil" (Una Terminal)
+La aplicación es lo suficientemente inteligente como para iniciar el backend por ti.
+1. Abre tu terminal en la carpeta `sara`.
+2. Activa tu entorno: `conda activate sara`
+3. Ejecuta:
    ```bash
    npm run dev
    ```
-4. The backend will start automatically in the background.
+4. El backend se iniciará automáticamente en segundo plano.
 
-### Option 2: The "Developer" Way (Two Terminals)
-Use this if you want to see the Python logs (recommended for debugging).
+### Opción 2: La Forma "Desarrollador" (Dos Terminales)
+Usa esto si quieres ver los registros de Python (recomendado para depuración).
 
 **Terminal 1 (Backend):**
 ```bash
-conda activate ada_v2
+conda activate sara
 python backend/server.py
 ```
 
 **Terminal 2 (Frontend):**
 ```bash
-# Environment doesn't matter here, but keep it simple
+# El entorno no importa aquí, pero mantenlo simple
 npm run dev
 ```
 
 ---
 
-## ✅ First Flight Checklist (Things to Test)
+## ✅ Lista de Verificación de Primer Vuelo (Cosas para Probar)
 
-1. **Voice Check**: Say "Hello Ada". She should respond.
-2. **Vision Check**: Look at the camera. If Face Auth is on, the lock screen should unlock.
-3. **CAD Check**: Open the CAD window and say "Create a cube". Watch the logs.
-4. **Web Check**: Open the Browser window and say "Go to Google".
-5. **Smart Home**: If you have Kasa devices, say "Turn on the lights".
-
----
-
-## ▶️ Commands & Tools Reference
-
-### 🗣️ Voice Commands
-- "Switch project to [Name]"
-- "Create a new project called [Name]"
-- "Turn on the [Room] light"
-- "Make the light [Color]"
-- "Pause audio" / "Stop audio"
-
-### 🧊 3D CAD
-- **Prompt**: "Create a 3D model of a hex bolt."
-- **Iterate**: "Make the head thinner." (Requires previous context)
-- **Files**: Saves to `projects/[ProjectName]/output.stl`.
-
-### 🌐 Web Agent
-- **Prompt**: "Go to Amazon and find a USB-C cable under $10."
-- **Note**: The agent will auto-scroll, click, and type. Do not interfere with the browser window while it runs.
-
-### 🖨️ Printing & Slicing
-- **Auto-Discovery**: SARA automatically finds printers on your network.
-- **Slicing**: Click "Slice & Print" on any generated 3D model.
-- **Profiles**: SARA intelligently selects the correct OrcaSlicer profile based on your printer's name (e.g., "Creality K1").
+1. **Prueba de Voz**: Di "Hola Sara". Ella debería responder.
+2. **Prueba de Visión**: Mira a la cámara. Si la Autenticación Facial está activada, la pantalla de bloqueo debería desbloquearse.
+3. **Prueba de CAD**: Abre la ventana de CAD y di "Crea un cubo". Observa los registros.
+4. **Prueba Web**: Abre la ventana del Navegador y di "Ve a Google".
+5. **Casa Inteligente**: Si tienes dispositivos Kasa, di "Enciende las luces".
 
 ---
 
-## ❓ Troubleshooting FAQ
+## ▶️ Referencia de Comandos y Herramientas
 
-### Camera not working / Permission denied (Mac)
-**Symptoms**: Error about camera access, or video feed shows black.
+### 🗣️ Comandos de Voz
+- "Cambia el proyecto a [Nombre]"
+- "Crea un nuevo proyecto llamado [Nombre]"
+- "Enciende la luz de [Habitación]"
+- "Pon la luz de color [Color]"
+- "Pausa el audio" / "Detén el audio"
 
-**Solution**:
-1. Go to **System Preferences > Privacy & Security > Camera**.
-2. Ensure your terminal app (e.g., Terminal, iTerm, VS Code) has camera access enabled.
-3. Restart the app after granting permission.
+### 🧊 CAD 3D
+- **Instrucción**: "Crea un modelo 3D de un perno hexagonal."
+- **Iterar**: "Haz la cabeza más delgada." (Requiere contexto previo)
+- **Archivos**: Guarda en `projects/[NombreProyecto]/output.stl`.
 
----
+### 🌐 Agente Web
+- **Instrucción**: "Ve a Amazon y busca un cable USB-C por menos de $10."
+- **Nota**: El agente hará scroll, clic y escribirá automáticamente. No interfieras con la ventana del navegador mientras se ejecuta.
 
-### `GEMINI_API_KEY` not found / Authentication Error
-**Symptoms**: Backend crashes on startup with "API key not found".
-
-**Solution**:
-1. Make sure your `.env` file is in the root `ada_v2` folder (not inside `backend/`).
-2. Verify the format is exactly: `GEMINI_API_KEY=your_key` (no quotes, no spaces).
-3. Restart the backend after editing the file.
-
----
-
-### WebSocket connection errors (1011)
-**Symptoms**: `websockets.exceptions.ConnectionClosedError: 1011 (internal error)`.
-
-**Solution**:
-This is a server-side issue from the Gemini API. Simply reconnect by clicking the connect button or saying "Hello SARA" again. If it persists, check your internet connection or try again later.
+### 🖨️ Impresión y Laminado
+- **Auto-Descubrimiento**: SARA encuentra automáticamente impresoras en tu red.
+- **Laminado**: Haz clic en "Laminar e Imprimir" en cualquier modelo 3D generado.
+- **Perfiles**: SARA selecciona inteligentemente el perfil correcto de OrcaSlicer basado en el nombre de tu impresora (ej., "Creality K1").
 
 ---
 
-## 📸 What It Looks Like
+## ❓ Preguntas Frecuentes (FAQ)
 
-*Coming soon! Screenshots and demo videos will be added here.*
+### La cámara no funciona / Acceso denegado (Mac)
+**Síntomas**: Error sobre acceso a la cámara, o la transmisión de video se ve negra.
+
+**Solución**:
+1. Ve a **Preferencias del Sistema > Privacidad y Seguridad > Cámara**.
+2. Asegúrate de que tu aplicación de terminal (ej., Terminal, iTerm, VS Code) tenga acceso a la cámara habilitado.
+3. Reinicia la aplicación después de conceder el permiso.
 
 ---
 
-## 📂 Project Structure
+### `GEMINI_API_KEY` no encontrada / Error de Autenticación
+**Síntomas**: El backend se bloquea al inicio con "API key not found".
+
+**Solución**:
+1. Asegúrate de que tu archivo `.env` esté en la carpeta raíz `sara` (no dentro de `backend/`).
+2. Verifica que el formato sea exactamente: `GEMINI_API_KEY=tu_clave` (sin comillas, sin espacios).
+3. Reinicia el backend después de editar el archivo.
+
+---
+
+### Errores de conexión WebSocket (1011)
+**Síntomas**: `websockets.exceptions.ConnectionClosedError: 1011 (internal error)`.
+
+**Solución**:
+Esto es un problema del lado del servidor de la API de Gemini. Simplemente reconecta haciendo clic en el botón de conectar o diciendo "Hola SARA" de nuevo. Si persiste, verifica tu conexión a internet o intenta de nuevo más tarde.
+
+---
+
+## 📸 Cómo se Ve
+
+*¡Próximamente! Se añadirán capturas de pantalla y videos de demostración aquí.*
+
+---
+
+## 📂 Estructura del Proyecto
 
 ```
-ada_v2/
-├── backend/                    # Python server & AI logic
-│   ├── ada.py                  # Gemini Live API integration
-│   ├── server.py               # FastAPI + Socket.IO server
-│   ├── cad_agent.py            # CAD generation orchestrator
-│   ├── printer_agent.py        # 3D printer discovery & slicing
-│   ├── web_agent.py            # Playwright browser automation
-│   ├── kasa_agent.py           # TP-Link smart home control
-│   ├── authenticator.py        # MediaPipe face auth logic
-│   ├── project_manager.py      # Project context management
-│   ├── tools.py                # Tool definitions for Gemini
-│   └── reference.jpg           # Your face photo (add this!)
-├── src/                        # React frontend
-│   ├── App.jsx                 # Main application component
-│   ├── components/             # UI components (11 files)
-│   └── index.css               # Global styles
-├── electron/                   # Electron main process
-│   └── main.js                 # Window & IPC setup
-├── projects/                   # User project data (auto-created)
-├── .env                        # API keys (create this!)
-├── requirements.txt            # Python dependencies
-├── package.json                # Node.js dependencies
-└── README.md                   # You are here!
+sara/
+├── backend/                    # Servidor Python y lógica de IA
+│   ├── ada.py                  # Integración API Gemini Live
+│   ├── server.py               # Servidor FastAPI + Socket.IO
+│   ├── cad_agent.py            # Orquestador de generación CAD
+│   ├── printer_agent.py        # Descubrimiento de impresora 3D y laminado
+│   ├── web_agent.py            # Automatización de navegador Playwright
+│   ├── kasa_agent.py           # Control de casa inteligente TP-Link
+│   ├── authenticator.py        # Lógica de autenticación facial MediaPipe
+│   ├── project_manager.py      # Gestión de contexto de proyecto
+│   ├── tools.py                # Definiciones de herramientas para Gemini
+│   └── reference.jpg           # Tu foto de cara (¡añade esto!)
+├── src/                        # Frontend React
+│   ├── App.jsx                 # Componente principal de la aplicación
+│   ├── components/             # Componentes de UI (11 archivos)
+│   └── index.css               # Estilos globales
+├── electron/                   # Proceso principal de Electron
+│   └── main.js                 # Configuración de ventana e IPC
+├── projects/                   # Datos de proyectos de usuario (auto-creado)
+├── .env                        # Claves API (¡crea esto!)
+├── requirements.txt            # Dependencias Python
+├── package.json                # Dependencias Node.js
+└── README.md                   # ¡Estás aquí!
 ```
 
 ---
 
-## ⚠️ Known Limitations
+## ⚠️ Limitaciones Conocidas
 
-| Limitation | Details |
-|------------|---------|
-| **macOS & Windows** | Tested on macOS 14+ and Windows 10/11. Linux is untested. |
-| **Camera Required** | Face auth and gesture control need a working webcam. |
-| **Gemini API Quota** | Free tier has rate limits; heavy CAD iteration may hit limits. |
-| **Network Dependency** | Requires internet for Gemini API (no offline mode). |
-| **Single User** | Face auth recognizes one person (the `reference.jpg`). |
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how:
-
-1. **Fork** the repository.
-2. **Create a branch**: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m 'Add amazing feature'`
-4. **Push** to the branch: `git push origin feature/amazing-feature`
-5. **Open a Pull Request** with a clear description.
-
-### Development Tips
-
-- Run the backend separately (`python backend/server.py`) to see Python logs.
-- Use `npm run dev` without Electron during frontend development (faster reload).
-- The `projects/` folder contains user data—don't commit it to Git.
+| Limitación | Detalles |
+|---|---|
+| **macOS y Windows** | Probado en macOS 14+ y Windows 10/11. Linux no probado. |
+| **Cámara Requerida** | La autenticación facial y el control por gestos necesitan una cámara web funcional. |
+| **Cuota API Gemini** | El nivel gratuito tiene límites de tasa; la iteración pesada de CAD puede alcanzar los límites. |
+| **Dependencia de Red** | Requiere internet para la API de Gemini (sin modo offline). |
+| **Usuario Único** | La autenticación facial reconoce a una persona (el `reference.jpg`). |
 
 ---
 
-## 🔒 Security Considerations
+## 🤝 Contribuir
 
-| Aspect | Implementation |
-|--------|----------------|
-| **API Keys** | Stored in `.env`, never committed to Git. |
-| **Face Data** | Processed locally, never uploaded. |
-| **Tool Confirmations** | Write/CAD/Web actions can require user approval. |
-| **No Cloud Storage** | All project data stays on your machine. |
+¡Las contribuciones son bienvenidas! Aquí se explica cómo:
 
-> [!WARNING]
-> Never share your `.env` file or `reference.jpg`. These contain sensitive credentials and biometric data.
+1. **Fork** el repositorio.
+2. **Crea una rama**: `git checkout -b feature/caracteristica-asombrosa`
+3. **Commit** tus cambios: `git commit -m 'Añadir caracteristica asombrosa'`
+4. **Push** a la rama: `git push origin feature/caracteristica-asombrosa`
+5. **Abre un Pull Request** con una descripción clara.
 
----
+### Consejos de Desarrollo
 
-## 🙏 Acknowledgments
-
-- **[Google Gemini](https://deepmind.google/technologies/gemini/)** — Native Audio API for real-time voice
-- **[build123d](https://github.com/gumyr/build123d)** — Modern parametric CAD library
-- **[MediaPipe](https://developers.google.com/mediapipe)** — Hand tracking, gesture recognition, and face authentication
-- **[Playwright](https://playwright.dev/)** — Reliable browser automation
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<p align="center">
-  <strong>Built with 🤖 by Nazir Louis</strong><br>
-  <em>Bridging AI, CAD, and Vision in a Single Interface</em>
-</p>
+- Ejecuta el backend por separado (`python backend/server.py`) para ver los registros de Python.
+- Usa `npm run dev` sin Electron durante el desarrollo del frontend (recarga más rápida).
